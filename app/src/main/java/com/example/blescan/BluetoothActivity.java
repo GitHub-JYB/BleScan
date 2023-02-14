@@ -23,6 +23,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
@@ -35,6 +36,8 @@ public class BluetoothActivity extends AppCompatActivity {
     private BluetoothAdapter mBluetoothAdapter;
     private ArrayList<String> permissionList = new ArrayList<String>();
     private BluetoothLeScanner bluetoothLeScanner;
+    private ArrayList<BluetoothDevice> deviceList = new ArrayList<>();
+    private MyBluetoothAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +98,9 @@ public class BluetoothActivity extends AppCompatActivity {
 
     private void initRecycleView() {
         RecyclerView recyclerView = findViewById(R.id.recycleView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new MyBluetoothAdapter();
+        recyclerView.setAdapter(adapter);
 
     }
 
@@ -131,12 +137,37 @@ public class BluetoothActivity extends AppCompatActivity {
             public void onScanResult(int callbackType, ScanResult result) {
                 // 获取BLE设备信息
                 BluetoothDevice dev = result.getDevice();
-                Log.i(TAG, "ult: " + dev);
-                // result.getScanRecord() 获取BLE广播数据
-                if (result.getScanRecord().getServiceData() != null & result.getScanRecord().getServiceUuids() != null) {
-                    byte[] uuid = result.getScanRecord().getServiceData().get(result.getScanRecord().getServiceUuids().get(0));
-                    Log.i(TAG, "ult: " + result.getDevice().getName());
+                if (ActivityCompat.checkSelfPermission(BluetoothActivity.this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(BluetoothActivity.this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 1);
                 }
+//                if (dev.getName() != null && dev.getName().startsWith("``")) {
+
+                    if (!deviceList.isEmpty()) {
+                        for (int i = 0; i < deviceList.size(); i++) {
+                            if (dev.getAddress().equals(deviceList.get(i).getAddress())) {
+                                deviceList.set(i, dev);
+                                adapter.setData(deviceList);
+                                break;
+                            }
+                            if (i >= deviceList.size() - 1) {
+                                deviceList.add(dev);
+                                adapter.setData(deviceList);
+                            }
+                        }
+                    } else {
+                        deviceList.add(dev);
+                        adapter.setData(deviceList);
+                   }
+                    Log.i(TAG, "onScanResult: " + deviceList.size());
+//                }
+
+//                deviceList.add(dev);
+//                dev.getAddress();
+//                Log.i(TAG, "ult: " + dev);
+//                // result.getScanRecord() 获取BLE广播数据
+//                if (result.getScanRecord().getServiceData() != null & result.getScanRecord().getServiceUuids() != null) {
+//                    byte[] uuid = result.getScanRecord().getServiceData().get(result.getScanRecord().getServiceUuids().get(0));
+//                }
             }
         };
 
@@ -150,21 +181,26 @@ public class BluetoothActivity extends AppCompatActivity {
                         ActivityCompat.requestPermissions(BluetoothActivity.this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 1);
                     }
                 }
-                String name = bluetoothDevice.getName();
+//                if (bluetoothDevice.getName() != null && bluetoothDevice.getName().startsWith("``")){
+                    if (!deviceList.isEmpty()){
+                        for (int j = 0; j < deviceList.size(); j++){
+                            if (bluetoothDevice.getAddress().equals(deviceList.get(j).getAddress())){
+                                deviceList.set(j, bluetoothDevice);
+                                adapter.setData(deviceList);
+                                break;
+                            }
+                            if (j >= deviceList.size() -1){
+                                deviceList.add(bluetoothDevice);
+                                adapter.setData(deviceList);
+                            }
+                        }
+                    }else {
+                        deviceList.add(bluetoothDevice);
+                        adapter.setData(deviceList);
+                    }
+//                }
 
-                Log.i(TAG, "onScanResult: " + bluetoothDevice.getType());
-                if (name != null && name.startsWith("``")){
-//                    if (result.getScanRecord().getServiceData() != null & result.getScanRecord().getServiceUuids() != null) {
-//                        byte[] uuid = result.getScanRecord().getServiceData().get(result.getScanRecord().getServiceUuids().get(0));
-//                    }
-                        Log.i(TAG, "name: " + name);
-                    Log.i(TAG, "name: " + bluetoothDevice.getUuids());
-                    Log.i(TAG, "name: " + bluetoothDevice.getAddress());
-                    Log.i(TAG, "name: " + bluetoothDevice.getType());
-
-
-                }
-
+                Log.i(TAG, "onScanResult: " + deviceList.size());
             }
         };
 
@@ -173,7 +209,7 @@ public class BluetoothActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(BluetoothActivity.this, new String[]{Manifest.permission.BLUETOOTH_SCAN}, 1);
             }
         }
-        mBluetoothAdapter.startLeScan(leScanCallback);
+//        mBluetoothAdapter.startLeScan(leScanCallback);
         bluetoothLeScanner.startScan(mScanCallback);
         new Handler().postDelayed(new Runnable() {
             @Override
@@ -184,7 +220,7 @@ public class BluetoothActivity extends AppCompatActivity {
                     }
                 }
                 bluetoothLeScanner.stopScan(mScanCallback); //停止扫描
-                mBluetoothAdapter.stopLeScan(leScanCallback);
+//                mBluetoothAdapter.stopLeScan(leScanCallback);
                 isScanning = false;
             }
         }, 5000);
