@@ -181,6 +181,9 @@ public class BluetoothActivity extends AppCompatActivity {
                         ActivityCompat.requestPermissions(BluetoothActivity.this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 1);
                     }
                 }
+                if (bluetoothDevice.getType() == BluetoothDevice.DEVICE_TYPE_LE || bluetoothDevice.getType() == BluetoothDevice.DEVICE_TYPE_UNKNOWN) {
+                    return;
+                }
 //                if (bluetoothDevice.getName() != null && bluetoothDevice.getName().startsWith("``")){
                     if (!deviceList.isEmpty()){
                         for (int j = 0; j < deviceList.size(); j++){
@@ -209,8 +212,8 @@ public class BluetoothActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(BluetoothActivity.this, new String[]{Manifest.permission.BLUETOOTH_SCAN}, 1);
             }
         }
-//        mBluetoothAdapter.startLeScan(leScanCallback);
-        bluetoothLeScanner.startScan(mScanCallback);
+        mBluetoothAdapter.startLeScan(leScanCallback);
+//        bluetoothLeScanner.startScan(mScanCallback);
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -219,11 +222,11 @@ public class BluetoothActivity extends AppCompatActivity {
                         ActivityCompat.requestPermissions(BluetoothActivity.this, new String[]{Manifest.permission.BLUETOOTH_SCAN}, 1);
                     }
                 }
-                bluetoothLeScanner.stopScan(mScanCallback); //停止扫描
-//                mBluetoothAdapter.stopLeScan(leScanCallback);
+//                bluetoothLeScanner.stopScan(mScanCallback); //停止扫描
+                mBluetoothAdapter.stopLeScan(leScanCallback);
                 isScanning = false;
             }
-        }, 5000);
+        }, 20000);
 //        // 旧API是BluetoothAdapter.startLeScan(LeScanCallback callback)方式扫描BLE蓝牙设备，如下：
 //        BluetoothAdapter.LeScanCallback callback = new BluetoothAdapter.LeScanCallback() {
 //            @Override

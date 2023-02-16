@@ -26,6 +26,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -117,7 +119,7 @@ public class Bluetooth2Activity extends AppCompatActivity {
         adapter.setOnClickListener(new MyBluetoothAdapter.OnClickListener() {
             @Override
             public void onClick(int position) {
-
+                bondAndConnect(deviceList.get(position));
             }
         });
         recyclerView.setAdapter(adapter);
@@ -217,36 +219,57 @@ public class Bluetooth2Activity extends AppCompatActivity {
         //当前蓝牙设备未配对，则先进行配对
         if(mCurDevice.getBondState()==BluetoothDevice.BOND_NONE){
             Log.d(TAG,"create bond to "+mCurDevice.getName());
-            boolean nRet= BluetoothUtil.createBond(mCurDevice);
-            if(!nRet){
-                Log.i(TAG, "bondAndConnect: createBond fail！");
-                return;
-            }
-            mFlag=0;
-            while(mFlag==0){
-                SystemClock.sleep(250);
-            }
-            if(mFlag==-1){
-                Log.i(TAG, "bondAndConnect: "+mCurDevice.getName()+"的蓝牙配对失败");
-                return;
-            }
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    //配对
+                    Method method;
+                    try {
+                        method = BluetoothDevice.class.getMethod("createBond");
+                        method.invoke(mCurDevice);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    Log.e(getPackageName(), "开始配对");
+                }
+            }).start();
+
+
+//            boolean nRet= true;
+////                    BluetoothUtil.createBond(mCurDevice);
+//            if(!nRet){
+//                Log.i(TAG, "bondAndConnect: createBond fail！");
+//                return;
+//            }
+//            mFlag=0;
+//            while(mFlag==0){
+//                SystemClock.sleep(250);
+//            }
+//            if(mFlag==-1){
+//                Log.i(TAG, "bondAndConnect: "+mCurDevice.getName()+"的蓝牙配对失败");
+//                return;
+//            }
         }
 
-        if(mCurDevice.getBondState()==BluetoothDevice.BOND_BONDED){
-            try {
-                //创建Socket
-                BluetoothSocket socket = mCurDevice.createRfcommSocketToServiceRecord(GlobalDef.BT_UUID);
-                //连接蓝牙服务套接字
-                socket.connect();
-                mThread=new SocketThread(socket);
-                mThread.start();
-                Log.i(TAG, "bondAndConnect: 成功与【"+mCurDevice.getName()+"】建立连接");
-            } catch (IOException e) {
-                Log.d(TAG,"socket connect fail");
-                Log.i(TAG, "bondAndConnect: 连接【"+mCurDevice.getName()+"】失败");
-                e.printStackTrace();
-            }
-        }
+//        if(mCurDevice.getBondState()==BluetoothDevice.BOND_BONDED){
+//            try {
+//                //创建Socket
+//                BluetoothSocket socket = mCurDevice.createRfcommSocketToServiceRecord(GlobalDef.BT_UUID);
+//                //连接蓝牙服务套接字
+//                socket.connect();
+//                mThread=new SocketThread(socket);
+//                mThread.start();
+//                Log.i(TAG, "bondAndConnect: 成功与【"+mCurDevice.getName()+"】建立连接");
+//            } catch (IOException e) {
+//                Log.d(TAG,"socket connect fail");
+//                Log.i(TAG, "bondAndConnect: 连接【"+mCurDevice.getName()+"】失败");
+//                e.printStackTrace();
+//            }
+//        }
     }
+
+    public void stopScan(View view) {}
+
 
 }

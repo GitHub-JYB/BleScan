@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void click(View view) {
+    public void startScan(View view) {
         BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         BluetoothAdapter adapter = bluetoothManager.getAdapter();
         if (!adapter.isEnabled()) {
@@ -124,4 +124,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }, 20000);
     }
+
+    public void stopScan(View view) {}
 }
