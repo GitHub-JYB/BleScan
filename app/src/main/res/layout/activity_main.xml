@@ -21,18 +21,18 @@
 
 
         <Button
+            android:id="@+id/start"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="start scan"
-            android:onClick="startScan"
             android:layout_centerHorizontal="true"
             android:layout_alignParentBottom="true" />
 
         <Button
+            android:id="@+id/stop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="stop scan"
-            android:onClick="stopScan"
             android:layout_marginStart="20dp"
             android:layout_alignParentBottom="true"  />
     </LinearLayout>
