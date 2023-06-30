@@ -80,6 +80,55 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
     private UUID CLIENT_CHARACTERISTIC_CONFIG_DESCRIPTOR_UUID;
     private MeshManagerApi mMeshManagerApi;
 
+
+    private static final int MTU_SIZE_DEFAULT = 23;
+    private static final int MTU_SIZE_MAX = 517;
+
+    /**
+     * Mesh provisioning service UUID
+     */
+    public final static UUID MESH_PROVISIONING_UUID = UUID.fromString("00001827-0000-1000-8000-00805F9B34FB");
+    /**
+     * Mesh provisioning data in characteristic UUID
+     */
+    private final static UUID MESH_PROVISIONING_DATA_IN = UUID.fromString("00002ADB-0000-1000-8000-00805F9B34FB");
+    /**
+     * Mesh provisioning data out characteristic UUID
+     */
+    private final static UUID MESH_PROVISIONING_DATA_OUT = UUID.fromString("00002ADC-0000-1000-8000-00805F9B34FB");
+
+
+
+    /**
+     * Mesh provisioning service UUID
+     */
+    public final static UUID MESH_PROXY_UUID = UUID.fromString("00001828-0000-1000-8000-00805F9B34FB");
+
+    /**
+     * Mesh provisioning data in characteristic UUID
+     */
+    private final static UUID MESH_PROXY_DATA_IN = UUID.fromString("00002ADD-0000-1000-8000-00805F9B34FB");
+
+    /**
+     * Mesh provisioning data out characteristic UUID
+     */
+    private final static UUID MESH_PROXY_DATA_OUT = UUID.fromString("00002ADE-0000-1000-8000-00805F9B34FB");
+
+    private final static UUID FEASY_SERVICE = UUID.fromString("0000fff0-0000-1000-8000-00805f9b34fb");
+    private final static UUID FSC_NOTIFICATION = UUID.fromString("0000fff1-0000-1000-8000-00805f9b34fb");
+
+    private final static UUID FSC_WRITE = UUID.fromString("0000fff2-0000-1000-8000-00805f9b34fb");
+
+    private BluetoothGattCharacteristic mMeshProvisioningDataInCharacteristic;
+    private BluetoothGattCharacteristic mMeshProvisioningDataOutCharacteristic;
+    public BluetoothGattCharacteristic mMeshProxyDataInCharacteristic;
+    private BluetoothGattCharacteristic mMeshProxyDataOutCharacteristic;
+    private BluetoothGattCharacteristic mFeasyCharacteristic;
+
+
+
+
+
     private ArrayList<byte[]> uuidList = new ArrayList<>();
 
 
@@ -136,6 +185,14 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
                     if (service.getUuid().equals(BATTERY_SERVICE)) {
                         isBatteryServiceFound = true;
                         mBatteryService = service;
+                    }
+                    if (service.getUuid().equals(MESH_PROXY_UUID)){
+                        final MeshNetwork network = mMeshManagerApi.getMeshNetwork();
+                        if (network != null) {
+                            if (!network.getNetKeys().isEmpty()) {
+                                String mNetworkId = mMeshManagerApi.generateNetworkId(network.getNetKeys().get(0).getKey());
+                            }
+                        }
                     }
                 }
                 if (!isHTServiceFound) {
@@ -358,7 +415,6 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
     }
 
     public void test(int position) {
-        BluetoothDevice bluetoothDevice = deviceList.get(position);
         byte[] bytes = uuidList.get(position);
         StringBuffer buffer = new StringBuffer();
         for (int i=0; i < 16; i++){
@@ -377,7 +433,6 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
             mMeshManagerApi.identifyNode(uuid);
             mMeshManagerApi.startProvisioning(new UnprovisionedMeshNode(uuid));
         }catch (Exception e){
-            Log.e(TAG, "test: " +e.getMessage());
             e.printStackTrace();
         }
 
@@ -456,7 +511,8 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
         adapter.setOnClickListener(new MyBluetoothAdapter.OnClickListener() {
             @Override
             public void onClick(int position) {
-                test(position);
+//                test(position);
+                bondAndConnect(position);
             }
         });
         recyclerView.setAdapter(adapter);
@@ -588,9 +644,9 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
     /**
      * 蓝牙配对并连接
      */
-    public void bondAndConnect(BluetoothDevice mCurDevice) {
+    public void bondAndConnect(int position) {
 
-
+        BluetoothDevice mCurDevice = deviceList.get(position);
         //取消搜索
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(Bluetooth2Activity.this, new String[]{Manifest.permission.BLUETOOTH_SCAN}, 2);
