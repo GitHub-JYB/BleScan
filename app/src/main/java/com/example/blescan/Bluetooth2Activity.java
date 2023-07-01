@@ -186,10 +186,10 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
                         mBatteryService = service;
                     }
                     if (service.getUuid().equals(MESH_PROXY_UUID)) {
-                        final MeshNetwork network = mMeshManagerApi.getMeshNetwork();
+                        network = mMeshManagerApi.getMeshNetwork();
                         if (network != null) {
                             if (!network.getNetKeys().isEmpty()) {
-                                String mNetworkId = mMeshManagerApi.generateNetworkId(network.getNetKeys().get(0).getKey());
+                                mNetworkId = mMeshManagerApi.generateNetworkId(network.getNetKeys().get(0).getKey());
                             }
                         }
                     }
@@ -304,11 +304,41 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
     };
 
     private String mNetworkId;
+    private BleMeshManager mBleMeshManager;
+    private MeshNetwork network;
+    private NrfMeshRepository nrfMeshRepository;
+
+    private void showList(ScanResult result){
+        if (result.getScanRecord().getServiceData() != null & result.getScanRecord().getServiceUuids() != null) {
+
+            byte[] uuid = result.getScanRecord().getServiceData().get(result.getScanRecord().getServiceUuids().get(0));
+            if ((uuid != null ? uuid.length : 0) >= 16) {
+                BluetoothDevice scanDevice = result.getDevice();
+                if (deviceList.isEmpty()) {
+                    deviceList.add(scanDevice);
+                    uuidList.add(uuid);
+                } else {
+                    for (int i = 0; i < deviceList.size(); i++) {
+                        if (scanDevice.equals(deviceList.get(i))) {
+                            deviceList.set(i, deviceList.get(i));
+                            uuidList.set(i, uuid);
+                            break;
+                        }
+                        if (i == deviceList.size() - 1) {
+                            deviceList.add(scanDevice);
+                            uuidList.add(uuid);
+                        }
+                    }
+
+                }
+                adapter.setData(deviceList);
+            }
+        }
+    }
 
     private final ScanCallback mScanCallbacks = new ScanCallback() {
         @Override
         public void onScanResult(final int callbackType, @NonNull final ScanResult result) {
-
             try {
 //                if (mFilterUuid.equals(BleMeshManager.MESH_PROVISIONING_UUID)) {
 //                    if (result.getScanRecord() != null){
@@ -328,9 +358,14 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
 //                }
 //                if (mFilterUuid.equals(BleMeshManager.MESH_PROXY_UUID)) {
                 final byte[] serviceData = Utils.getServiceData(result, BleMeshManager.MESH_PROXY_UUID);
+                if (serviceData == null){
+                    return;
+                }
+
                 if (mMeshManagerApi != null) {
                     if (mMeshManagerApi.isAdvertisingWithNetworkIdentity(serviceData)) {
                         if (mMeshManagerApi.networkIdMatches(mNetworkId, serviceData)) {
+                            Log.i(TAG, "onScanResult: " + mNetworkId);
                             updateScannerLiveData(result);
                         }
                     } else if (mMeshManagerApi.isAdvertisedWithNodeIdentity(serviceData)) {
@@ -356,17 +391,27 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
 
         }
     };
+    private BluetoothManager bluetoothManager;
+    private BluetoothAdapter bluetoothAdapter;
+    private BluetoothLeScanner scanner;
 
     private void updateScannerLiveData(final ScanResult result) {
        /* if (result.getDevice() .getName()== null && result.getScanRecord().getDeviceName() == null){
             return;
         }*/
+        showList(result);
         final ScanRecord scanRecord = result.getScanRecord();
         // Log.e(TAG, "updateScannerLiveData: " + MeshParserUtils.bytesToHex(scanRecord.getBytes(), false) );
         if (scanRecord != null) {
             if (scanRecord.getBytes() != null) {
                 final byte[] beaconData = mMeshManagerApi.getMeshBeaconData(scanRecord.getBytes());
                 if (beaconData != null) {
+                    StringBuffer buffer = new StringBuffer();
+                    for (byte bytes : beaconData){
+                        buffer.append(bytes);
+                        buffer.append(",");
+                    }
+                    Log.i(TAG, "updateScannerLiveData: " + buffer.toString());
 //                    mScannerLiveData.deviceDiscovered(result, mMeshManagerApi.getMeshBeacon(beaconData));
                 } else {
                     // mScannerLiveData.deviceDiscovered(result);
@@ -394,14 +439,18 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         checkPermission();
-        checkBluetooth();
         intBtn();
         initRecycleView();
         initReceiver();
         handlerThread = new HandlerThread("test");
         handlerThread.start();
         handler = new Handler(handlerThread.getLooper());
+        bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        bluetoothAdapter = bluetoothManager.getAdapter();
+        scanner = bluetoothAdapter.getBluetoothLeScanner();
         mMeshManagerApi = new MeshManagerApi(this);
+        mBleMeshManager = new BleMeshManager(this);
+        nrfMeshRepository = new NrfMeshRepository(this, mMeshManagerApi, mBleMeshManager);
         mMeshManagerApi.setMeshManagerCallbacks(new MeshManagerCallbacks() {
             @Override
             public void onNetworkLoaded(MeshNetwork meshNetwork) {
@@ -496,6 +545,9 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
             }
         });
         mMeshManagerApi.loadMeshNetwork();
+        network = mMeshManagerApi.getMeshNetwork();
+//        mBleMeshManager.setGattCallbacks(mGattCallback);
+
     }
 
     public void test(int position) {
@@ -510,19 +562,6 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
         }
         Log.i(TAG, "test: " + buffer);
         UUID uuid = UUID.fromString(buffer.toString());
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        try {
-            mMeshManagerApi.identifyNode(uuid);
-            mMeshManagerApi.startProvisioning(new UnprovisionedMeshNode(uuid));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-//        final GenericOnOffSet genericOnOffSet = new GenericOnOffSet(appKey, state,
-//                new Random().nextInt(), transitionSteps, transitionStepResolution, delay);
-//        mMeshManagerApi.createMeshPdu(address, genericOnOffSet);
     }
 
     private void intBtn() {
@@ -542,52 +581,6 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
 
     }
 
-    private void checkBluetooth() {
-        //获取系统蓝牙适配器管理类
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        // 询问打开蓝牙
-        if (mBluetoothAdapter == null) {
-            return;
-        }
-        if (!mBluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    ActivityCompat.requestPermissions(Bluetooth2Activity.this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 1);
-                }
-            }
-            startActivityForResult(enableBtIntent, 1);
-//             mBluetoothAdapter.enable();
-        }
-//        mBluetoothAdapter.startDiscovery();
-//        Set<BluetoothDevice> bondedDevices = mBluetoothAdapter.getBondedDevices();
-    }
-
-
-    // 申请打开蓝牙请求的回调
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // TODO Auto-generated method stub
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1) {
-            if (resultCode == RESULT_OK) {
-                Toast.makeText(this, "蓝牙已经开启", Toast.LENGTH_SHORT).show();
-            } else if (resultCode == RESULT_CANCELED) {
-                Toast.makeText(this, "没有蓝牙权限", Toast.LENGTH_SHORT).show();
-                finish();
-            }
-        }
-        if (requestCode == 2) {
-            if (resultCode == RESULT_OK) {
-                Toast.makeText(this, "权限已获得", Toast.LENGTH_SHORT).show();
-            } else if (resultCode == RESULT_CANCELED) {
-                Toast.makeText(this, "没有获得权限", Toast.LENGTH_SHORT).show();
-                finish();
-            }
-        }
-    }
-
-
     private void initRecycleView() {
         RecyclerView recyclerView = findViewById(R.id.recycleView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -604,18 +597,9 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
     }
 
     private void feasyTest() {
-        MeshManagerApi meshManagerApi = new MeshManagerApi(this);
-        BleMeshManager bleMeshManager = new BleMeshManager(this);
-        NrfMeshRepository nrfMeshRepository = new NrfMeshRepository(Bluetooth2Activity.this, meshManagerApi, bleMeshManager);
-        final MeshNetwork network = mMeshManagerApi.getMeshNetwork();
-        if (network != null) {
-            if (!network.getNetKeys().isEmpty()) {
-                mNetworkId = mMeshManagerApi.generateNetworkId(network.getNetKeys().get(0).getKey());
-            }
-        }
-        BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
-        BluetoothLeScanner scanner = bluetoothAdapter.getBluetoothLeScanner();
+
+
+
         final ScanSettings settings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 // Refresh the devices list every second
@@ -636,10 +620,18 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        scanner.startScan(null, settings, mScanCallbacks);
-        BluetoothDevice device = bleMeshManager.getBluetoothDevice();
 
-        ProvisionedMeshNode provisionedMeshNode = nrfMeshRepository.getPhoneNodes().getValue();
+        mMeshManagerApi = nrfMeshRepository.getMeshManagerApi();
+        network = mMeshManagerApi.getMeshNetwork();
+        if (network != null) {
+            if (!network.getNetKeys().isEmpty()) {
+                mNetworkId = mMeshManagerApi.generateNetworkId(network.getNetKeys().get(0).getKey());
+            }
+        }
+        scanner.startScan(null, settings, mScanCallbacks);
+
+
+
     }
 
     private void checkPermission() {
@@ -732,36 +724,11 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
         }
 //        stopScan();
 //        mBluetoothAdapter.startDiscovery();
-        BluetoothLeScanner scanner = mBluetoothAdapter.getBluetoothLeScanner();
         scanner.startScan(new ScanCallback() {
             @Override
             public void onScanResult(int callbackType, ScanResult result) {
                 super.onScanResult(callbackType, result);
-                if (result.getScanRecord().getServiceData() != null & result.getScanRecord().getServiceUuids() != null) {
-
-                    byte[] uuid = result.getScanRecord().getServiceData().get(result.getScanRecord().getServiceUuids().get(0));
-                    if ((uuid != null ? uuid.length : 0) >= 16) {
-                        BluetoothDevice scanDevice = result.getDevice();
-                        if (deviceList.isEmpty()) {
-                            deviceList.add(scanDevice);
-                            uuidList.add(uuid);
-                        } else {
-                            for (int i = 0; i < deviceList.size(); i++) {
-                                if (scanDevice.equals(deviceList.get(i))) {
-                                    deviceList.set(i, deviceList.get(i));
-                                    uuidList.set(i, uuid);
-                                    break;
-                                }
-                                if (i == deviceList.size() - 1) {
-                                    deviceList.add(scanDevice);
-                                    uuidList.add(uuid);
-                                }
-                            }
-
-                        }
-                        adapter.setData(deviceList);
-                    }
-                }
+                showList(result);
             }
         });
     }
@@ -800,7 +767,6 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
 
 
     }
-
 
     public void stopScan() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
