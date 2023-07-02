@@ -3,6 +3,7 @@ package com.example.blescan;
 import android.Manifest;
 import android.bluetooth.BluetoothDevice;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 
 public class MyBluetoothAdapter extends RecyclerView.Adapter {
-    private ArrayList<BluetoothDevice> deviceList;
+    private ArrayList<ExtendedBluetoothDevice> deviceList;
     private OnClickListener onClickListener;
 
     @NonNull
@@ -29,9 +30,10 @@ public class MyBluetoothAdapter extends RecyclerView.Adapter {
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ((MyBluetoothViewHolder) holder).address.setText("Address: " + deviceList.get(position).getAddress());
         if (ActivityCompat.checkSelfPermission(holder.itemView.getContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        ((MyBluetoothViewHolder) holder).type.setText("Type: " + deviceList.get(position).getType());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                return;
+        }}
+//        ((MyBluetoothViewHolder) holder).type.setText("Type: " + deviceList.get(position).getType());
         ((MyBluetoothViewHolder) holder).name.setText("Name:    " + deviceList.get(position).getName());
 
     }
@@ -42,7 +44,7 @@ public class MyBluetoothAdapter extends RecyclerView.Adapter {
     }
 
 
-    public void setData(ArrayList<BluetoothDevice> deviceList) {
+    public void setData(ArrayList<ExtendedBluetoothDevice> deviceList) {
         this.deviceList = deviceList;
         notifyDataSetChanged();
     }

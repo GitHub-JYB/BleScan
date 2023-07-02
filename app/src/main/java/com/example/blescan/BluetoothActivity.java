@@ -146,17 +146,17 @@ public class BluetoothActivity extends AppCompatActivity {
                         for (int i = 0; i < deviceList.size(); i++) {
                             if (dev.getAddress().equals(deviceList.get(i).getAddress())) {
                                 deviceList.set(i, dev);
-                                adapter.setData(deviceList);
+//                                adapter.setData(deviceList);
                                 break;
                             }
                             if (i >= deviceList.size() - 1) {
                                 deviceList.add(dev);
-                                adapter.setData(deviceList);
+//                                adapter.setData(deviceList);
                             }
                         }
                     } else {
                         deviceList.add(dev);
-                        adapter.setData(deviceList);
+//                        adapter.setData(deviceList);
                    }
                     Log.i(TAG, "onScanResult: " + deviceList.size());
 //                }
@@ -189,17 +189,17 @@ public class BluetoothActivity extends AppCompatActivity {
                         for (int j = 0; j < deviceList.size(); j++){
                             if (bluetoothDevice.getAddress().equals(deviceList.get(j).getAddress())){
                                 deviceList.set(j, bluetoothDevice);
-                                adapter.setData(deviceList);
+//                                adapter.setData(deviceList);
                                 break;
                             }
                             if (j >= deviceList.size() -1){
                                 deviceList.add(bluetoothDevice);
-                                adapter.setData(deviceList);
+//                                adapter.setData(deviceList);
                             }
                         }
                     }else {
                         deviceList.add(bluetoothDevice);
-                        adapter.setData(deviceList);
+//                        adapter.setData(deviceList);
                     }
 //                }
 

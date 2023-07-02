@@ -13,6 +13,7 @@ import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.ParcelUuid;
@@ -151,7 +152,7 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
     private boolean mIsReconnectingFlag;
     private boolean mIsScanning;
     private boolean mSetupProvisionedNode;
-//    private ProvisioningStatusLiveData mProvisioningStateLiveData;
+    //    private ProvisioningStatusLiveData mProvisioningStateLiveData;
     private MeshNetwork mMeshNetwork;
     private boolean mIsCompositionDataReceived;
     private boolean mIsDefaultTtlReceived;
@@ -1122,15 +1123,18 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
 
         final BluetoothLeScanner scanner = BluetoothAdapter.getDefaultAdapter().getBluetoothLeScanner();
         Log.e(TAG, "startScan: 开始扫描");
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
         }
         scanner.startScan(filters, settings, scanCallback);
         mHandler.postDelayed(mScannerTimeout, 20000);
@@ -1143,15 +1147,18 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
         mHandler.removeCallbacks(mScannerTimeout);
         final BluetoothLeScanner scanner = BluetoothAdapter.getDefaultAdapter().getBluetoothLeScanner();
         Log.e(TAG, "stopScan: 停止扫描");
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
         }
         scanner.stopScan(scanCallback);
         mIsScanning = false;
@@ -1160,7 +1167,7 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
     private final ScanCallback scanCallback = new ScanCallback() {
         @Override
         public void onScanResult(final int callbackType, final ScanResult result) {
-            Log.e(TAG, "onScanResult: (((((((((((((((((((" );
+            Log.e(TAG, "onScanResult: (((((((((((((((((((");
             //In order to connectToProxy to the correct device, the hash advertised in the advertisement data should be matched.
             //This is to make sure we connectToProxy to the same device as device addresses could change after provisioning.
             final ScanRecord scanRecord = result.getScanRecord();
@@ -1179,7 +1186,6 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
         }
 
 
-
         @Override
         public void onBatchScanResults(@NonNull final List<ScanResult> results) {
             // Batch scan is disabled (report delay = 0)
@@ -1187,10 +1193,9 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
 
         @Override
         public void onScanFailed(final int errorCode) {
-            Log.e(TAG, "onScanFailed: " + errorCode );
+            Log.e(TAG, "onScanFailed: " + errorCode);
         }
     };
-
 
 
     private void onProvisionedDeviceFound(final ProvisionedMeshNode node, final ExtendedBluetoothDevice device) {
