@@ -221,6 +221,7 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
         bluetoothAdapter = bluetoothManager.getAdapter();
         scanner = bluetoothAdapter.getBluetoothLeScanner();
         mMeshManagerApi = new MeshManagerApi(this);
+
         mBleMeshManager = new BleMeshManager(this);
 //        mBleMeshManager.setGattCallbacks(new BleMeshManagerCallbacks() {
 //            @Override
