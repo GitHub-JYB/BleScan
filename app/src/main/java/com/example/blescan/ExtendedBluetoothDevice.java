@@ -22,8 +22,8 @@
 package com.example.blescan;
 
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.le.ScanRecord;
-import android.bluetooth.le.ScanResult;
+import no.nordicsemi.android.support.v18.scanner.ScanResult;
+import no.nordicsemi.android.support.v18.scanner.ScanRecord;
 import android.os.Parcel;
 import android.os.Parcelable;
 

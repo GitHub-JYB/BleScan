@@ -44,9 +44,13 @@ public class MyBluetoothAdapter extends RecyclerView.Adapter {
     }
 
 
-    public void setData(ArrayList<ExtendedBluetoothDevice> deviceList) {
+    public void setData(ArrayList<ExtendedBluetoothDevice> deviceList, int index) {
         this.deviceList = deviceList;
-        notifyDataSetChanged();
+        if (index == -1){
+            notifyDataSetChanged();
+        }else {
+            notifyItemChanged(index);
+        }
     }
 
     class MyBluetoothViewHolder extends RecyclerView.ViewHolder {

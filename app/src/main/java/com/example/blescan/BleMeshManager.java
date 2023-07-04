@@ -38,7 +38,7 @@ import java.util.UUID;
 
 
 
-public class BleMeshManager extends BleManager<BleMeshManagerCallbacks>{
+public class BleMeshManager extends LoggableBleManager<BleMeshManagerCallbacks>{
 
     private static final String TAG = "BleMeshManager";
     private static final int MTU_SIZE_DEFAULT = 23;

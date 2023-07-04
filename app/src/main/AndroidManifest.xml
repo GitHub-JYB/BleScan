@@ -10,6 +10,12 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <!-- 手机权限管理中允许此权限，否则会出现无法搜索到设备的情况；-->
 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"
+        tools:ignore="ScopedStorage" />
+
     <!-- BLE权限增加了BEL支持检查-->
     <!-- (1).在manifest中添加权限-->
     <!-- true 表示手机必须支持BLE，否则无法安装！
@@ -21,6 +27,7 @@
 
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE"/>
 
     <application
         android:allowBackup="true"

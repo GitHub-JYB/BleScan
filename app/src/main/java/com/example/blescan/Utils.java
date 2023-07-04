@@ -25,8 +25,6 @@ package com.example.blescan;
 import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.le.ScanRecord;
-import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -46,6 +44,9 @@ import com.feasycom.feasymesh.library.NetworkKey;
 
 import java.util.Comparator;
 import java.util.UUID;
+
+import no.nordicsemi.android.support.v18.scanner.ScanRecord;
+import no.nordicsemi.android.support.v18.scanner.ScanResult;
 
 
 public class Utils {
