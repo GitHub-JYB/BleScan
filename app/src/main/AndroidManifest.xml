@@ -39,7 +39,7 @@
         android:theme="@style/Theme.BleScan"
         tools:targetApi="31">
         <activity
-            android:name=".Bluetooth2Activity"
+            android:name=".BluetoothActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -48,7 +48,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".MainActivity" />
-        <activity android:name=".BluetoothActivity" />
+        <activity android:name=".Bluetooth2Activity" />
 
     </application>
 
