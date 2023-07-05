@@ -120,6 +120,7 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
 
         }
     };
+    private ExtendedBluetoothDevice device;
 
     private void updateScannerLiveData(final ScanResult result) {
         checkPermission();
@@ -198,6 +199,8 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
         start.setOnClickListener(this);
         Button stop = findViewById(R.id.stop);
         stop.setOnClickListener(this);
+        Button send = findViewById(R.id.send);
+        send.setOnClickListener(this);
     }
 
     private void initRecycleView() {
@@ -279,6 +282,9 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
             case R.id.stop:
                 stopScan();
                 break;
+            case R.id.send:
+                send();
+                break;
         }
     }
 
@@ -288,17 +294,15 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
      */
     @SuppressLint("RestrictedApi")
     public void bondAndConnect(int position) {
-        ExtendedBluetoothDevice device = mDevices.get(position);
+        device = mDevices.get(position);
         Log.i(TAG, "onClick: ");
         if (mIsScanning) {
             stopScan();
         }
         //取消搜索
-
         checkPermission();
         nrfMeshRepository.getBleMeshManager().isProvisioning = true;
         nrfMeshRepository.connect(getBaseContext(), device, false);
-//        nrfMeshRepository.getMeshNetworkLiveData().resetSelectedAppKey();
 
         nrfMeshRepository.isDeviceReady().observe(this, deviceReady -> {
             if (nrfMeshRepository.getBleMeshManager().isDeviceReady()) {
@@ -345,5 +349,9 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
         Log.e(TAG, "stopScan: 停止扫描");
         scanner.stopScan(mScanCallbacks);
         mIsScanning = false;
+    }
+
+    private void send() {
+        nrfMeshRepository.onDataSent(device.getDevice(), nrfMeshRepository.getMtu(), new byte[]{1,2,3,4});
     }
 }

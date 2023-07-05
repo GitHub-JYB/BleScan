@@ -35,6 +35,14 @@
             android:text="stop scan"
             android:layout_marginStart="20dp"
             android:layout_alignParentBottom="true"  />
+
+        <Button
+            android:id="@+id/send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="send"
+            android:layout_marginStart="20dp"
+            android:layout_alignParentBottom="true"  />
     </LinearLayout>
 
 </RelativeLayout>
