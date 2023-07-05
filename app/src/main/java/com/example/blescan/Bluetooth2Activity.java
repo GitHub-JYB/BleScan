@@ -77,48 +77,11 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
     private String TAG = "test";
     private ArrayList<String> permissionList = new ArrayList<String>();
     private MyBluetoothAdapter adapter;
-
     private HandlerThread handlerThread;
     private Handler handler;
-
-    private ProvisionedMeshNode phoneNode;
     private NrfMeshRepository nrfMeshRepository;
-    private ArrayList<BluetoothDevice> deviceList = new ArrayList<>();
-    private ArrayList<byte[]> uuidList = new ArrayList<>();
     private boolean mIsScanning = false;
     private Runnable runnable;
-
-    private void showList(ScanResult result) {
-        if (result.getScanRecord().getServiceData() != null & result.getScanRecord().getServiceUuids() != null) {
-
-            byte[] uuid = result.getScanRecord().getServiceData().get(result.getScanRecord().getServiceUuids().get(0));
-            if ((uuid != null ? uuid.length : 0) >= 16) {
-                BluetoothDevice scanDevice = result.getDevice();
-                if (deviceList.isEmpty()) {
-                    deviceList.add(scanDevice);
-                    uuidList.add(uuid);
-                    resultList.add(result);
-                } else {
-                    for (int i = 0; i < deviceList.size(); i++) {
-                        if (scanDevice.equals(deviceList.get(i))) {
-                            deviceList.set(i, deviceList.get(i));
-                            uuidList.set(i, uuid);
-                            resultList.set(i, result);
-
-                            break;
-                        }
-                        if (i == deviceList.size() - 1) {
-                            deviceList.add(scanDevice);
-                            uuidList.add(uuid);
-                            resultList.add(result);
-                        }
-                    }
-
-                }
-//                adapter.setData(deviceList);
-            }
-        }
-    }
 
     private ArrayList<ScanResult> resultList = new ArrayList<>();
     private ArrayList<ExtendedBluetoothDevice> mDevices = new ArrayList<>();
@@ -126,43 +89,6 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
     private final ScanCallback mScanCallbacks = new ScanCallback() {
         @Override
         public void onScanResult(final int callbackType, @NonNull final ScanResult result) {
-//            showList(result);
-//            final ScanRecord scanRecord = result.getScanRecord();
-//            if (scanRecord != null) {
-//                if (scanRecord.getBytes() != null) {
-//                    final byte[] beaconData = mMeshManagerApi.getMeshBeaconData(scanRecord.getBytes());
-//                    if (beaconData != null) {
-//                        if (mMeshManagerApi.getMeshBeacon(beaconData) != null) {
-//                            ExtendedBluetoothDevice device = new ExtendedBluetoothDevice(result, mMeshManagerApi.getMeshBeacon(beaconData));
-//                            if (mDevices.isEmpty()) {
-//                                mDevices.add(device);
-//                            } else {
-//                                for (int i = 0; i < mDevices.size(); i++) {
-//                                    if (device.getAddress().equals(mDevices.get(i).getAddress())) {
-//                                        if (device.getName() == null) {
-//                                            device.setName(mDevices.get(i).getName());
-//                                        }
-//                                        mDevices.set(i, device);
-//                                        break;
-//                                    }
-//                                    if (i == mDevices.size() - 1) {
-//                                        mDevices.add(device);
-//                                    }
-//
-//                                }
-//
-//                            }
-//                            adapter.setData(mDevices);
-//                        }
-//                    }
-//                }
-//            }
-
-
-            // 连接的设备
-//            ExtendedBluetoothDevice device = mDevices.get(0);
-//            stopScan();
-//            nrfMeshRepository.connect(getBaseContext(), device, true);
             try {
                 if (result.getScanRecord() != null) {
                     if (result.getScanRecord().getServiceUuids() != null) {
@@ -191,7 +117,6 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
 
         @Override
         public void onScanFailed(final int errorCode) {
-//            mScannerStateLiveData.scanningStopped();
 
         }
     };
@@ -266,202 +191,6 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
         handlerThread.start();
         handler = new Handler(handlerThread.getLooper());
         nrfMeshRepository = new NrfMeshRepository(new MeshManagerApi(this), new BleMeshManager(this));
-
-//        mMeshManagerApi = new MeshManagerApi(this);
-//        mMeshManagerApi.setMeshManagerCallbacks(new MeshManagerCallbacks() {
-//            @Override
-//            public void onNetworkLoaded(MeshNetwork meshNetwork) {
-//                Log.i(TAG, "onNetworkLoaded: ");
-//            }
-//
-//            @Override
-//            public void onNetworkUpdated(MeshNetwork meshNetwork) {
-//                Log.i(TAG, "onNetworkUpdated: ");
-//            }
-//
-//            @Override
-//            public void onNetworkLoadFailed(String s) {
-//                Log.i(TAG, "onNetworkLoadFailed: ");
-//            }
-//
-//            @Override
-//            public void onNetworkImported(MeshNetwork meshNetwork) {
-//                Log.i(TAG, "onNetworkImported: ");
-//            }
-//
-//            @Override
-//            public void onNetworkImportFailed(String s) {
-//                Log.i(TAG, "onNetworkImportFailed: ");
-//            }
-//
-//            @Override
-//            public void sendProvisioningPdu(UnprovisionedMeshNode unprovisionedMeshNode, byte[] bytes) {
-//                Log.i(TAG, "sendProvisioningPdu: ");
-//            }
-//
-//            @Override
-//            public void onMeshPduCreated(byte[] bytes) {
-//                Log.i(TAG, "onMeshPduCreated: ");
-//            }
-//
-//            @Override
-//            public int getMtu() {
-//                return 0;
-//            }
-//        });
-//        mMeshManagerApi.setProvisioningStatusCallbacks(new MeshProvisioningStatusCallbacks() {
-//            @Override
-//            public void onProvisioningStateChanged(UnprovisionedMeshNode unprovisionedMeshNode, ProvisioningState.States states, byte[] bytes) {
-//                Log.i(TAG, "onProvisioningStateChanged: ");
-//                mMeshManagerApi.startProvisioningWithStaticOOB(unprovisionedMeshNode);
-//            }
-//
-//            @Override
-//            public void onProvisioningFailed(UnprovisionedMeshNode unprovisionedMeshNode, ProvisioningState.States states, byte[] bytes) {
-//                Log.i(TAG, "onProvisioningFailed: ");
-//            }
-//
-//            @Override
-//            public void onProvisioningCompleted(ProvisionedMeshNode provisionedMeshNode, ProvisioningState.States states, byte[] bytes) {
-//                Log.i(TAG, "onProvisioningCompleted: ");
-//
-//            }
-//        });
-//        mMeshManagerApi.setMeshStatusCallbacks(new MeshStatusCallbacks() {
-//            @Override
-//            public void onTransactionFailed(int i, boolean b) {
-//                Log.i(TAG, "onTransactionFailed: ");
-//            }
-//
-//            @Override
-//            public void onUnknownPduReceived(int i, byte[] bytes) {
-//                Log.i(TAG, "onUnknownPduReceived: ");
-//            }
-//
-//            @Override
-//            public void onBlockAcknowledgementProcessed(int i, @NonNull ControlMessage controlMessage) {
-//                Log.i(TAG, "onBlockAcknowledgementProcessed: ");
-//            }
-//
-//            @Override
-//            public void onBlockAcknowledgementReceived(int i, @NonNull ControlMessage controlMessage) {
-//                Log.i(TAG, "onBlockAcknowledgementReceived: ");
-//            }
-//
-//            @Override
-//            public void onMeshMessageProcessed(int i, @NonNull MeshMessage meshMessage) {
-//                Log.i(TAG, "onMeshMessageProcessed: ");
-//            }
-//
-//            @Override
-//            public void onMeshMessageReceived(int i, @NonNull MeshMessage meshMessage) {
-//                Log.i(TAG, "onMeshMessageReceived: ");
-//            }
-//
-//            @Override
-//            public void onMessageDecryptionFailed(String s, String s1) {
-//                Log.i(TAG, "onMessageDecryptionFailed: ");
-//            }
-//        });
-//        mMeshManagerApi.loadMeshNetwork();
-//
-//        mBleMeshManager = new BleMeshManager(this);
-//        mBleMeshManager.setGattCallbacks(new BleMeshManagerCallbacks() {
-//            @Override
-//            public void onDataReceived(BluetoothDevice bluetoothDevice, int mtu, byte[] pdu) {
-//                Log.i(TAG, "onDataReceived: ");
-//            }
-//
-//            @Override
-//            public void onDataSent(BluetoothDevice device, int mtu, byte[] pdu) {
-//                Log.i(TAG, "onDataSent: ");
-//            }
-//
-//            @Override
-//            public void onDeviceConnecting(@NonNull BluetoothDevice bluetoothDevice) {
-//                Log.i(TAG, "onDeviceConnecting: ");
-//            }
-//
-//            @Override
-//            public void onDeviceConnected(@NonNull BluetoothDevice bluetoothDevice) {
-//                Log.i(TAG, "onDeviceConnected: ");
-//            }
-//
-//            @Override
-//            public void onDeviceDisconnecting(@NonNull BluetoothDevice bluetoothDevice) {
-//                Log.i(TAG, "onDeviceDisconnecting: ");
-//            }
-//
-//            @Override
-//            public void onDeviceDisconnected(@NonNull BluetoothDevice bluetoothDevice) {
-//                Log.i(TAG, "onDeviceDisconnected: ");
-//
-//            }
-//
-//            @Override
-//            public void onLinkLossOccurred(@NonNull BluetoothDevice bluetoothDevice) {
-//                Log.i(TAG, "onLinkLossOccurred: ");
-//            }
-//
-//            @Override
-//            public void onServicesDiscovered(@NonNull BluetoothDevice bluetoothDevice, boolean b) {
-//                Log.i(TAG, "onServicesDiscovered: ");
-//            }
-//
-//            @Override
-//            public void onDeviceReady(@NonNull BluetoothDevice bluetoothDevice) {
-//                Log.i(TAG, "onDeviceReady: ");
-//                checkPermission();
-////                if (bluetoothDevice.getUuids() != null) {
-////                    mMeshManagerApi.identifyNode(bluetoothDevice.getUuids());
-////                }
-////                    UnprovisionedBeacon beacon = (UnprovisionedBeacon)bluetoothDevice.getBeacon();
-////                    if (beacon != null){
-////                        mMeshManagerApi.identifyNode(beacon.getUuid());
-////                    }else {
-////                        final byte[] serviceData = Utils.getServiceData(bluetoothDevice).getScanResult(), BleMeshManager.MESH_PROVISIONING_UUID);
-////                        if (serviceData != null) {
-////                            final UUID uuid = mMeshManagerApi.getDeviceUuid(serviceData);
-////                            mMeshManagerApi.identifyNode(uuid);
-////                        }
-////                    }
-//            }
-//
-//            @Override
-//            public void onBondingRequired(@NonNull BluetoothDevice bluetoothDevice) {
-//                Log.i(TAG, "onBondingRequired: ");
-//            }
-//
-//            @Override
-//            public void onBonded(@NonNull BluetoothDevice bluetoothDevice) {
-//                Log.i(TAG, "onBonded: ");
-//            }
-//
-//            @Override
-//            public void onBondingFailed(@NonNull BluetoothDevice bluetoothDevice) {
-//                Log.i(TAG, "onBondingFailed: ");
-//            }
-//
-//            @Override
-//            public void onError(@NonNull BluetoothDevice bluetoothDevice, @NonNull String s, int i) {
-//                Log.i(TAG, "onError: ");
-//            }
-//
-//            @Override
-//            public void onDeviceNotSupported(@NonNull BluetoothDevice bluetoothDevice) {
-//                Log.i(TAG, "onDeviceNotSupported: ");
-//            }
-//
-//            @Override
-//            public void onAddress(String s) {
-//                Log.i(TAG, "onAddress: ");
-//            }
-//
-//            @Override
-//            public void onIvIndex(int i, boolean b) {
-//                Log.i(TAG, "onIvIndex: ");
-//            }
-//        });
     }
 
     private void intBtn() {
@@ -478,7 +207,6 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
         adapter.setOnClickListener(new MyBluetoothAdapter.OnClickListener() {
             @Override
             public void onClick(int position) {
-//                test(position);
                 bondAndConnect(position);
             }
         });
@@ -487,39 +215,7 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
     }
 
     private void feasyTest() {
-
         checkPermission();
-
-//        network = mMeshManagerApi.getMeshNetwork();
-//        if (network != null) {
-//            if (!network.getNetKeys().isEmpty()) {
-//                mNetworkId = mMeshManagerApi.generateNetworkId(network.getNetKeys().get(0).getKey());
-//            }
-//            for (ProvisionedMeshNode node : network.getNodes()) {
-//                if (!node.getUuid().equalsIgnoreCase(network.getSelectedProvisioner().getProvisionerUuid())) {
-//
-//                } else {
-//                    phoneNode = node;
-//
-//                }
-//            }
-//        }
-//
-//        Log.i(TAG, "feasyTest: " + phoneNode.getNodeName());
-//        Log.i(TAG, "feasyTest: " + phoneNode.getUnicastAddress());
-//        if (phoneNode.getElements() != null && !phoneNode.getElements().isEmpty()) {
-//            if (phoneNode.getCompanyIdentifier() != null) {
-//                Log.i(TAG, "feasyTest: " + CompanyIdentifiers.getCompanyName(phoneNode.getCompanyIdentifier().shortValue()));
-//            }
-//            Log.i(TAG, "feasyTest: " + phoneNode.getElements().size());
-//            Log.i(TAG, "feasyTest: " + phoneNode.getNumberOfElements());
-//            int i = 0;
-//            for (Element element : phoneNode.getElements().values()) {
-//                i += element.getMeshModels().size();
-//            }
-//            Log.i(TAG, "feasyTest: " + i);
-//
-//        }
         if (mIsScanning) {
             return;
         }
@@ -579,8 +275,6 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
         switch (view.getId()) {
             case R.id.start:
                 feasyTest();
-
-//                startScan();
                 break;
             case R.id.stop:
                 stopScan();
@@ -596,13 +290,11 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
     public void bondAndConnect(int position) {
         ExtendedBluetoothDevice device = mDevices.get(position);
         Log.i(TAG, "onClick: ");
-//        nrfMeshRepository.disconnect();
         if (mIsScanning) {
             stopScan();
         }
         //取消搜索
 
-//        nrfMeshRepository.disconnect();
         checkPermission();
         nrfMeshRepository.getBleMeshManager().isProvisioning = true;
         nrfMeshRepository.connect(getBaseContext(), device, false);
@@ -612,40 +304,7 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
             if (nrfMeshRepository.getBleMeshManager().isDeviceReady()) {
                 final boolean isComplete = nrfMeshRepository.isProvisioningComplete();
                 if (isComplete) {
-                    nrfMeshRepository.getProvisioningState().observe(this, provisioningStateLiveData -> {
-                        if (provisioningStateLiveData != null) {
-                            final ProvisionerProgress provisionerProgress = provisioningStateLiveData.getProvisionerProgress();
-                            if (provisionerProgress != null) {
-                                final ProvisionerStates state = provisionerProgress.getState();
-                                switch (state) {
-                                    case PROVISIONING_FAILED:
-                                        Log.i(TAG, "DIALOG_FRAGMENT_PROVISIONING_FAILED");
-                                        break;
-                                    case PROVISIONING_AUTHENTICATION_STATIC_OOB_WAITING:
-                                    case PROVISIONING_AUTHENTICATION_OUTPUT_OOB_WAITING:
-                                    case PROVISIONING_AUTHENTICATION_INPUT_OOB_WAITING:
-                                        Log.i(TAG, "DIALOG_FRAGMENT_AUTH_INPUT_TAG");
 
-                                        break;
-                                    case PROVISIONING_AUTHENTICATION_INPUT_ENTERED:
-                                        Log.i(TAG, "DIALOG_FRAGMENT_AUTH_INPUT_TAG 2");
-
-                                        break;
-                                    case PROVISIONING_COMPLETE:
-                                    case NETWORK_TRANSMIT_STATUS_RECEIVED:
-                                        Log.i(TAG, "DIALOG_FRAGMENT_CONFIGURATION_STATUS");
-
-                                        break;
-                                    case PROVISIONER_UNASSIGNED:
-                                        Log.i(TAG, "DIALOG_FRAGMENT_CONFIGURATION_STATUS 2");
-                                        break;
-                                    default:
-                                        break;
-                                }
-
-                            }
-                        }
-                    });
                     Log.i(TAG, "bondAndConnect: complete");
                 } else {
 //                    setupProvisionerStateObservers(provisioningStatusContainer);
@@ -657,12 +316,6 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
                 }
             }
         });
-
-        nrfMeshRepository.getMeshNetworkLiveData().observe(this, meshNetworkLiveData -> {
-            final ApplicationKey applicationKey = meshNetworkLiveData.getSelectedAppKey();
-            Log.e("TAG", "onCreate: -----------------------" + meshNetworkLiveData.getMeshNetwork().getUnicastAddress());
-        });
-
         nrfMeshRepository.getUnprovisionedMeshNode().observe(this, meshNode -> {
             if (meshNode != null) {
                 final ProvisioningCapabilities capabilities = meshNode.getProvisioningCapabilities();
@@ -677,20 +330,7 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
                         } catch (IllegalArgumentException ex) {
                             Log.i(TAG, ex.getMessage());
                         }
-                        UnprovisionedMeshNode node = nrfMeshRepository.getUnprovisionedMeshNode().getValue();
-                        if (node != null) {
-                            if (node.getProvisioningCapabilities() != null) {
-                                if (node.getProvisioningCapabilities().getAvailableOOBTypes().size() == 1 &&
-                                        node.getProvisioningCapabilities().getAvailableOOBTypes().get(0) == AuthenticationOOBMethods.NO_OOB_AUTHENTICATION) {
-                                    try {
-                                        node.setNodeName(nrfMeshRepository.getMeshNetworkLiveData().getNodeName());
-                                        nrfMeshRepository.getMeshManagerApi().startProvisioning(node);
-                                    } catch (IllegalArgumentException ex) {
-                                        Log.i(TAG, ex.getMessage());
-                                    }
-                                }
-                            }
-                        }
+
                     }
                 }
             }
@@ -706,6 +346,4 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
         scanner.stopScan(mScanCallbacks);
         mIsScanning = false;
     }
-
-
 }

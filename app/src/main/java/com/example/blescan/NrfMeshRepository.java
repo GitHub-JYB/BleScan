@@ -727,6 +727,12 @@ public class NrfMeshRepository implements MeshProvisioningStatusCallbacks, MeshS
             case PROVISIONING_FAILED:
                 mIsProvisioningComplete = false;
                 break;
+            case PROVISIONING_CAPABILITIES:
+                mMeshManagerApi.startProvisioning(meshNode);
+                break;
+            case PROVISIONING_COMPLETE:
+                disconnect();
+                break;
         }
         mProvisioningStateLiveData.onMeshNodeStateUpdated(ProvisionerStates.fromStatusCode(state.getState()));
     }
