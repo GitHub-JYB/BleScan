@@ -7,9 +7,17 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattServer;
+import android.bluetooth.BluetoothGattServerCallback;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.BluetoothSocket;
+import android.bluetooth.le.AdvertiseCallback;
+import android.bluetooth.le.AdvertiseData;
+import android.bluetooth.le.AdvertiseSettings;
+import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanRecord;
@@ -22,6 +30,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.ParcelUuid;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -34,7 +43,10 @@ import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -42,7 +54,10 @@ import java.util.UUID;
 public class BluetoothActivity extends AppCompatActivity implements View.OnClickListener {
 
     private String TAG = "test";
-    private UUID uuid = UUID.fromString("0003cdd0-0000-1000-8000-00805f9b0131");
+    private UUID service_uuid = UUID.fromString("0003cdd0-0000-1000-8000-00805f9b0131");
+    private UUID read_uuid = UUID.fromString("0003cdd1-0000-1000-8000-00805f9b0131");
+    private UUID write_uuid = UUID.fromString("0003cdd2-0000-1000-8000-00805f9b0131");
+
     private boolean isScanning = false;
     private ArrayList<String> permissionList = new ArrayList<String>();
     private ArrayList<BluetoothDevice> deviceList = new ArrayList<>();
@@ -52,6 +67,11 @@ public class BluetoothActivity extends AppCompatActivity implements View.OnClick
     private Runnable runnable;
     private MyBluetoothAdapter1 bluetoothAdapter;
     private BluetoothAdapter adapter;
+    private BluetoothLeAdvertiser mAdvertiser;
+    private BluetoothGattService mService;
+    private BluetoothGattCharacteristic characteristic;
+    private BluetoothManager bluetoothManager;
+    private BluetoothGattServer mBluetoothGattServer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +101,7 @@ public class BluetoothActivity extends AppCompatActivity implements View.OnClick
                 stopScan();
             }
         };
-        BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         adapter = bluetoothManager.getAdapter();
         scanner = adapter.getBluetoothLeScanner();
         // 扫描结果Callback
@@ -89,26 +109,29 @@ public class BluetoothActivity extends AppCompatActivity implements View.OnClick
             @Override
             public void onScanResult(int callbackType, ScanResult result) {
                 // 获取BLE设备信息
+                checkPermission();
                 ScanRecord scanRecord = result.getScanRecord();
                 if (scanRecord != null) {
                     if (scanRecord.getBytes() != null) {
                         BluetoothDevice dev = result.getDevice();
-                        int index = -1;
-                        if (!deviceList.isEmpty()) {
-                            for (int i = 0; i < deviceList.size(); i++) {
-                                if (dev.getAddress().equals(deviceList.get(i).getAddress())) {
-                                    deviceList.set(i, dev);
-                                    index = i;
-                                    break;
+                        if (dev.getName() != null && dev.getName().startsWith("``")) {
+                            int index = -1;
+                            if (!deviceList.isEmpty()) {
+                                for (int i = 0; i < deviceList.size(); i++) {
+                                    if (dev.getAddress().equals(deviceList.get(i).getAddress())) {
+                                        deviceList.set(i, dev);
+                                        index = i;
+                                        break;
+                                    }
+                                    if (i >= deviceList.size() - 1) {
+                                        deviceList.add(dev);
+                                    }
                                 }
-                                if (i >= deviceList.size() - 1) {
-                                    deviceList.add(dev);
-                                }
+                            } else {
+                                deviceList.add(dev);
                             }
-                        } else {
-                            deviceList.add(dev);
+                            bluetoothAdapter.setData(deviceList, index);
                         }
-                        bluetoothAdapter.setData(deviceList, index);
                     }
                 }
             }
@@ -125,65 +148,92 @@ public class BluetoothActivity extends AppCompatActivity implements View.OnClick
             @Override
             public void onClick(int position) {
                 checkPermission();
-                BluetoothDevice device = adapter.getRemoteDevice(deviceList.get(position).getAddress());
-                try {
-                    Method createBond = device.getClass().getMethod("createBond");
-                    Boolean invoke = (Boolean)createBond.invoke(device);
-                    Log.i(TAG, "onClick: " + invoke.booleanValue());
-                } catch (Exception e) {
-                    e.printStackTrace();
+                if (isScanning){
+                    startScan();
                 }
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//                    device.connectGatt(BluetoothActivity.this, false, new BluetoothGattCallback() {
-//                        @Override
-//                        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-//                            super.onConnectionStateChange(gatt, status, newState);
-//                            if (status == BluetoothGatt.GATT_SUCCESS){
-//                                if (newState == BluetoothProfile.STATE_CONNECTED){
-//                                    handler.post(new Runnable() {
-//                                        @Override
-//                                        public void run() {
-//                                            checkPermission();
-//                                            gatt.discoverServices();
-//
-//                                        }
-//                                    });
-//                                }
-//                            }
-//                        }
-//
-//                        @Override
-//                        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-//                            super.onServicesDiscovered(gatt, status);
-//                            checkPermission();
-//                            BluetoothGattService gattService = gatt.getService(uuid);
-//                            if (gattService != null){
-//                                BluetoothGattCharacteristic characteristic = gattService.getCharacteristic(uuid);
-//                                if (characteristic != null){
-//                                    characteristic.setValue(new byte[]{1, 2, 3, 4});
-//                                    gatt.writeCharacteristic(characteristic);
-//                                    gatt.readCharacteristic(characteristic);
-//                                }
-//                            }
-//                        }
-//
-//                        @Override
-//                        public void onCharacteristicRead(@NonNull BluetoothGatt gatt, @NonNull BluetoothGattCharacteristic characteristic, @NonNull byte[] value, int status) {
-//                            super.onCharacteristicRead(gatt, characteristic, value, status);
-//                            if (status == BluetoothGatt.GATT_SUCCESS){
-//                                Log.i(TAG, "onCharacteristicRead: " + characteristic.getValue());
-//                            }
-//                        }
-//
-//                        @Override
-//                        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-//                            super.onCharacteristicWrite(gatt, characteristic, status);
-//                            if (status == BluetoothGatt.GATT_SUCCESS){
-//                                Log.i(TAG, "onCharacteristicWrite: " + characteristic.getValue());
-//                            }
-//                        }
-//                    }, BluetoothDevice.DEVICE_TYPE_LE);
-//                }
+                BluetoothDevice device = adapter.getRemoteDevice(deviceList.get(position).getAddress());
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    BluetoothGatt bluetoothGatt = device.connectGatt(BluetoothActivity.this, false, new BluetoothGattCallback() {
+                        @Override
+                        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+                            super.onConnectionStateChange(gatt, status, newState);
+                            if (status == BluetoothGatt.GATT_SUCCESS) {
+                                if (newState == BluetoothProfile.STATE_CONNECTED) {
+                                    handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            checkPermission();
+                                            gatt.discoverServices();
+
+                                        }
+                                    });
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+                            super.onServicesDiscovered(gatt, status);
+                            checkPermission();
+                            if (gatt == null){
+                                return;
+                            }
+                            BluetoothGattService service = gatt.getService(service_uuid);
+                            if (service == null){
+                                return;
+                            }
+                            BluetoothGattCharacteristic read = service.getCharacteristic(read_uuid);
+                            BluetoothGattCharacteristic write = service.getCharacteristic(write_uuid);
+                            if (read == null){
+                                return;
+                            }
+                            gatt.setCharacteristicNotification(read,true);
+                            BluetoothGattDescriptor descriptor = read.getDescriptors().get(0);
+                            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                            gatt.writeDescriptor(descriptor);
+
+                            handler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    checkPermission();
+                                    String src = "FA5500110117200164000144F503380D0A";
+                                    int l = src.length() / 2;
+                                    byte[] ret = new byte[l];
+                                    for (int i = 0; i < l; i++) {
+                                        ret[i] = (byte) Integer
+                                                .valueOf(src.substring(i * 2, i * 2 + 2), 16).byteValue();
+                                    }
+                                    write.setValue(ret);
+                                    gatt.writeCharacteristic(write);
+                                    gatt.disconnect();
+                                }
+                            }, 5000);
+
+
+                        }
+
+                        @Override
+                        public void onCharacteristicRead(@NonNull BluetoothGatt gatt, @NonNull BluetoothGattCharacteristic characteristic, @NonNull byte[] value, int status) {
+                            super.onCharacteristicRead(gatt, characteristic, value, status);
+                            if (status == BluetoothGatt.GATT_SUCCESS) {
+                                Log.i(TAG, "onCharacteristicRead: " + characteristic.getValue());
+                            }
+                        }
+
+                        @Override
+                        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+                            super.onCharacteristicWrite(gatt, characteristic, status);
+                            if (status == BluetoothGatt.GATT_SUCCESS) {
+                                StringBuffer stringBuffer = new StringBuffer();
+                                for (int i = 0; i < characteristic.getValue().length; i++){
+                                    stringBuffer.append(characteristic.getValue()[i]);
+                                    stringBuffer.append(" ");
+                                }
+                                Log.i(TAG, "onCharacteristicWrite: " + stringBuffer);
+                            }
+                        }
+                    }, BluetoothDevice.DEVICE_TYPE_LE);
+                }
             }
         });
 
@@ -239,7 +289,7 @@ public class BluetoothActivity extends AppCompatActivity implements View.OnClick
 
     @Override
     public void onClick(View view) {
-        switch (view.getId()){
+        switch (view.getId()) {
             case R.id.start:
                 startScan();
                 break;

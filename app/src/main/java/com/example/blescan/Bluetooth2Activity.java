@@ -218,6 +218,7 @@ public class Bluetooth2Activity extends AppCompatActivity implements View.OnClic
     }
 
     private void feasyTest() {
+        mDevices.clear();
         checkPermission();
         if (mIsScanning) {
             return;
